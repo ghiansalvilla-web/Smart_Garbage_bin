@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Bin — Dashboard</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#22c55e" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="dashboard-page">
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <svg width="28" height="28" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="36" height="36" rx="10" fill="#22c55e"/>
+        <path d="M10 13h16M14 13V10h8v3M13 13l1.5 13h9L25 13" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M15.5 17v6M18 17v6M20.5 17v6" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <span class="topbar-title">Smart Bin</span>
+    </div>
+    <div class="topbar-right">
+      <span class="admin-badge">Admin</span>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <!-- Notification Banner -->
+  <div id="notif-banner" class="notif-banner hidden"></div>
+
+  <main class="dashboard-main">
+    <div class="page-header">
+      <div>
+        <h2>Bin Dashboard</h2>
+        <p class="page-sub">Live status — updates every 2 seconds</p>
+      </div>
+      <div class="summary-pills" id="summary-pills">
+        <span class="pill pill-ok"   id="pill-ok">0 OK</span>
+        <span class="pill pill-half" id="pill-half">0 Half</span>
+        <span class="pill pill-full" id="pill-full">0 Full</span>
+      </div>
+    </div>
+
+    <!-- Bin Cards Grid -->
+    <div class="bins-grid" id="bins-grid"></div>
+
+    <!-- Notifications Log -->
+    <section class="notif-section">
+      <div class="notif-header">
+        <h3>Notifications</h3>
+        <button class="btn-clear" onclick="clearNotifs()">Clear all</button>
+      </div>
+      <div class="notif-list" id="notif-list">
+        <p class="notif-empty">No alerts yet.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
