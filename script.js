@@ -5,8 +5,8 @@ const firebaseConfig = {
   apiKey: "AIzaSyBdmxDRFTyU05XKGZaHaXwcHp-nuwBjVR0",
   databaseURL: "https://smartgarbagebin-996d0-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "smartgarbagebin-996d0",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  messagingSenderId: "413668818423",  // ← replace this
+  appId: "1:413668818423:web:9464b7cd8b074bd01102f2"                  // ← replace this
 };
 
 /* ============================
@@ -56,62 +56,31 @@ if (document.getElementById("bins-grid")) {
   const db = firebase.database();
 
   // State
-  const binState      = {};
-  const notifLog      = [];
-  const notifSeen     = {};
-  const notifCooldown = {};
-  const COOLDOWN_MS   = 60000;
+  const binState  = {};
+  const notifLog  = [];
+  const notifSeen = {};
 
   const BIN_LABELS = {
     bin1: "Bin #1",
     bin3: "Bin #3",
   };
 
-  /* ---------- NOTIFICATIONS PERMISSION ---------- */
-  async function enableNotifications() {
-    if (!("Notification" in window)) {
-      alert("Your browser does not support notifications.");
-      return;
-    }
+  /* ---------- PUSH NOTIFICATIONS ---------- */
+  async function requestNotifPermission() {
+    if (!("Notification" in window)) return;
 
     try {
       const permission = await Notification.requestPermission();
-      const btn = document.getElementById("btn-notif");
-
       if (permission === "granted") {
-        if (btn) {
-          btn.textContent = "🔔 Alerts ON";
-          btn.classList.add("enabled");
-        }
-        if ("serviceWorker" in navigator) {
-          await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-        }
-        // Test notification
-        new Notification("✅ Smart Bin Alerts Enabled!", {
-          body: "You will now receive bin full notifications.",
-          icon: "/icon.png"
-        });
-      } else {
-        alert("Notifications blocked. Please enable in your browser settings.");
+        console.log("Notification permission granted.");
       }
     } catch (err) {
       console.error("Notification error:", err);
     }
   }
 
-  // Check on load if already enabled
-  window.addEventListener("load", () => {
-    const btn = document.getElementById("btn-notif");
-    if (btn && Notification.permission === "granted") {
-      btn.textContent = "🔔 Alerts ON";
-      btn.classList.add("enabled");
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/firebase-messaging-sw.js");
-      }
-    }
-  });
+  requestNotifPermission();
 
-  /* ---------- SEND PUSH NOTIFICATION ---------- */
   function sendPushNotif(label, pct) {
     if (Notification.permission !== "granted") return;
 
@@ -120,7 +89,7 @@ if (document.getElementById("bins-grid")) {
       icon: "/icon.png",
       badge: "/icon.png",
       vibrate: [200, 100, 200],
-      tag: label
+      tag: label  // prevents duplicate notifications
     });
   }
 
@@ -168,7 +137,7 @@ if (document.getElementById("bins-grid")) {
     `;
   }
 
-  /* ---------- ADD NOTIFICATION ---------- */
+  /* ---------- NOTIFICATIONS ---------- */
   function addNotification(binId, status, level) {
     if (status !== "FULL") return;
 
@@ -246,13 +215,8 @@ if (document.getElementById("bins-grid")) {
       const status = (d.status || "EMPTY").toUpperCase();
 
       if (notifSeen[binId] !== status) {
-        const now = Date.now();
-        const lastNotif = notifCooldown[binId] || 0;
-        const cooldownPassed = (now - lastNotif) > COOLDOWN_MS;
-
-        if (notifSeen[binId] !== undefined && status === "FULL" && cooldownPassed) {
+        if (notifSeen[binId] !== undefined && status === "FULL") {
           addNotification(binId, status, level);
-          notifCooldown[binId] = now;
         }
         notifSeen[binId] = status;
       }
@@ -275,4 +239,11 @@ if (document.getElementById("bins-grid")) {
       for (const binId in defaultData) {
         const d = defaultData[binId];
         binState[binId]  = d;
-        notifSeen[binId] = d.st
+        notifSeen[binId] = d.status.toUpperCase();
+        renderBinCard(binId);
+      }
+      updateSummary();
+    }
+  }, 2500);
+
+} // end dashboard block
