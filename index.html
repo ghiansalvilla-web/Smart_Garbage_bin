@@ -9,7 +9,6 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="login-page">
-
   <div class="login-wrapper">
     <div class="login-card">
       <div class="login-icon">
@@ -21,7 +20,6 @@
       </div>
       <h1>Smart Garbage Bin</h1>
       <p class="subtitle">Sign in to monitor your bins</p>
-
       <div class="form-group">
         <label for="username">Username</label>
         <input type="text" id="username" placeholder="Enter username" autocomplete="username" />
@@ -30,15 +28,11 @@
         <label for="password">Password</label>
         <input type="password" id="password" placeholder="Enter password" autocomplete="current-password" />
       </div>
-
       <p class="error-msg" id="error"></p>
-
       <button class="btn-login" onclick="login()">Sign In</button>
-
-      <p class="hint"> <code></code> / <code></code></p>
+      <p class="hint">Default: <code>admin</code> / <code>1234</code></p>
     </div>
   </div>
-
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="script.js"></script>
