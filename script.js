@@ -5,8 +5,8 @@ const firebaseConfig = {
   apiKey: "AIzaSyBdmxDRFTyU05XKGZaHaXwcHp-nuwBjVR0",
   databaseURL: "https://smartgarbagebin-996d0-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "smartgarbagebin-996d0",
-  messagingSenderId: "413668818423",  // ← replace this
-  appId: "1:413668818423:web:9464b7cd8b074bd01102f2"                  // ← replace this
+  messagingSenderId: "413668818423",
+  appId: "1:413668818423:web:9464b7cd8b074bd01102f2"
 };
 
 /* ============================
@@ -56,40 +56,70 @@ if (document.getElementById("bins-grid")) {
   const db = firebase.database();
 
   // State
-  const binState  = {};
-  const notifLog  = [];
-  const notifSeen = {};
+  const binState      = {};
+  const notifLog      = [];
+  const notifSeen     = {};
+  const notifCooldown = {};
+  const COOLDOWN_MS   = 60000; // 1 minute between notifications per bin
 
   const BIN_LABELS = {
     bin1: "Bin #1",
     bin3: "Bin #3",
   };
 
-  /* ---------- PUSH NOTIFICATIONS ---------- */
-  async function requestNotifPermission() {
-    if (!("Notification" in window)) return;
+  /* ---------- ENABLE NOTIFICATIONS ---------- */
+  async function enableNotifications() {
+    if (!("Notification" in window)) {
+      alert("Your browser does not support notifications.");
+      return;
+    }
 
     try {
       const permission = await Notification.requestPermission();
+      const btn = document.getElementById("btn-notif");
+
       if (permission === "granted") {
-        console.log("Notification permission granted.");
+        if (btn) {
+          btn.textContent = "🔔 ON";
+          btn.classList.add("enabled");
+        }
+        if ("serviceWorker" in navigator) {
+          await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+        }
+        // Send test notification immediately so user knows it works
+        new Notification("✅ Alerts Enabled!", {
+          body: "You will now receive bin full notifications.",
+          icon: "/icon.png"
+        });
+      } else {
+        alert("Notifications blocked. Go to browser settings and allow notifications for this site.");
       }
     } catch (err) {
       console.error("Notification error:", err);
     }
   }
 
-  requestNotifPermission();
+  // Restore button state on page load if already allowed
+  window.addEventListener("load", () => {
+    const btn = document.getElementById("btn-notif");
+    if (btn && Notification.permission === "granted") {
+      btn.textContent = "🔔 ON";
+      btn.classList.add("enabled");
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/firebase-messaging-sw.js");
+      }
+    }
+  });
 
+  /* ---------- SEND PUSH NOTIFICATION ---------- */
   function sendPushNotif(label, pct) {
     if (Notification.permission !== "granted") return;
-
     new Notification(`🚨 ${label} is FULL!`, {
-      body: `Fill level is at ${pct}% — needs immediate collection!`,
+      body: `Fill level at ${pct}% — needs immediate collection!`,
       icon: "/icon.png",
       badge: "/icon.png",
       vibrate: [200, 100, 200],
-      tag: label  // prevents duplicate notifications
+      tag: label
     });
   }
 
@@ -137,7 +167,7 @@ if (document.getElementById("bins-grid")) {
     `;
   }
 
-  /* ---------- NOTIFICATIONS ---------- */
+  /* ---------- ADD NOTIFICATION ---------- */
   function addNotification(binId, status, level) {
     if (status !== "FULL") return;
 
@@ -214,14 +244,18 @@ if (document.getElementById("bins-grid")) {
       const level  = Math.min(100, Math.max(0, parseFloat(d.trashLevel) || 0));
       const status = (d.status || "EMPTY").toUpperCase();
 
-      if (notifSeen[binId] !== status) {
-        if (notifSeen[binId] !== undefined && status === "FULL") {
+      // Notify with cooldown whenever bin is FULL
+      if (status === "FULL") {
+        const now = Date.now();
+        const lastNotif = notifCooldown[binId] || 0;
+        if ((now - lastNotif) > COOLDOWN_MS) {
           addNotification(binId, status, level);
+          notifCooldown[binId] = now;
         }
-        notifSeen[binId] = status;
       }
 
-      binState[binId] = { level, status };
+      notifSeen[binId] = status;
+      binState[binId]  = { level, status };
       renderBinCard(binId);
     }
 
