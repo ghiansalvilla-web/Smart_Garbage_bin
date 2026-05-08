@@ -5,8 +5,8 @@ const firebaseConfig = {
   apiKey: "AIzaSyBdmxDRFTyU05XKGZaHaXwcHp-nuwBjVR0",
   databaseURL: "https://smartgarbagebin-996d0-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "smartgarbagebin-996d0",
-  messagingSenderId: "413668818423",  // ← replace this
-  appId: "1:413668818423:web:9464b7cd8b074bd01102f2"                  // ← replace this
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
 /* ============================
@@ -56,11 +56,11 @@ if (document.getElementById("bins-grid")) {
   const db = firebase.database();
 
   // State
-const binState    = {};
-const notifLog    = [];
-const notifSeen   = {};
-const notifCooldown = {};  // prevents spam
-const COOLDOWN_MS = 60000; // only notify once per minute per bin
+  const binState      = {};
+  const notifLog      = [];
+  const notifSeen     = {};
+  const notifCooldown = {};
+  const COOLDOWN_MS   = 60000; // 1 minute cooldown per bin
 
   const BIN_LABELS = {
     bin1: "Bin #1",
@@ -74,7 +74,11 @@ const COOLDOWN_MS = 60000; // only notify once per minute per bin
     try {
       const permission = await Notification.requestPermission();
       if (permission === "granted") {
-        console.log("Notification permission granted.");
+        console.log("Notifications allowed");
+        if ("serviceWorker" in navigator) {
+          const reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+          console.log("Service worker registered:", reg);
+        }
       }
     } catch (err) {
       console.error("Notification error:", err);
@@ -91,7 +95,7 @@ const COOLDOWN_MS = 60000; // only notify once per minute per bin
       icon: "/icon.png",
       badge: "/icon.png",
       vibrate: [200, 100, 200],
-      tag: label  // prevents duplicate notifications
+      tag: label
     });
   }
 
@@ -216,17 +220,18 @@ const COOLDOWN_MS = 60000; // only notify once per minute per bin
       const level  = Math.min(100, Math.max(0, parseFloat(d.trashLevel) || 0));
       const status = (d.status || "EMPTY").toUpperCase();
 
+      // Only notify once per cooldown period
       if (notifSeen[binId] !== status) {
-  const now = Date.now();
-  const lastNotif = notifCooldown[binId] || 0;
-  const cooldownPassed = (now - lastNotif) > COOLDOWN_MS;
+        const now = Date.now();
+        const lastNotif = notifCooldown[binId] || 0;
+        const cooldownPassed = (now - lastNotif) > COOLDOWN_MS;
 
-  if (notifSeen[binId] !== undefined && status === "FULL" && cooldownPassed) {
-    addNotification(binId, status, level);
-    notifCooldown[binId] = now;
-  }
-  notifSeen[binId] = status;
-}
+        if (notifSeen[binId] !== undefined && status === "FULL" && cooldownPassed) {
+          addNotification(binId, status, level);
+          notifCooldown[binId] = now;
+        }
+        notifSeen[binId] = status;
+      }
 
       binState[binId] = { level, status };
       renderBinCard(binId);
