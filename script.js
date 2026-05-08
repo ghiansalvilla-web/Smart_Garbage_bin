@@ -267,7 +267,7 @@ if (document.getElementById("bins-grid")) {
     if (grid && grid.children.length === 0) {
       const defaultData = {
         bin1: { level: 0, status: "EMPTY" },
-        bin3: { level: 0, status: "EMPTY" }
+        
       };
       for (const binId in defaultData) {
         const d = defaultData[binId];
