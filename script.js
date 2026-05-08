@@ -61,14 +61,35 @@ if (document.getElementById("bins-grid")) {
   const notifSeen     = {};
   const notifCooldown = {};
   const COOLDOWN_MS   = 60000; // 1 minute between notifications per bin
+  const iconUrl       = new URL("icon.png", window.location.href).href;
 
   const BIN_LABELS = {
     bin1: "Bin #1",
   };
 
+  function notificationsSupported() {
+    return "Notification" in window && "serviceWorker" in navigator;
+  }
+
+  async function registerAlertServiceWorker() {
+    if (!("serviceWorker" in navigator)) return null;
+    return navigator.serviceWorker.register("firebase-messaging-sw.js");
+  }
+
+  async function showBrowserNotification(title, options) {
+    if (!notificationsSupported() || Notification.permission !== "granted") return;
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      await registration.showNotification(title, options);
+    } catch (err) {
+      new Notification(title, options);
+    }
+  }
+
   /* ---------- ENABLE NOTIFICATIONS ---------- */
   async function enableNotifications() {
-    if (!("Notification" in window)) {
+    if (!notificationsSupported()) {
       alert("Your browser does not support notifications.");
       return;
     }
@@ -83,12 +104,13 @@ if (document.getElementById("bins-grid")) {
           btn.classList.add("enabled");
         }
         if ("serviceWorker" in navigator) {
-          await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+          await registerAlertServiceWorker();
         }
         // Send test notification immediately so user knows it works
-        new Notification("✅ Alerts Enabled!", {
+        await showBrowserNotification("Alerts Enabled!", {
           body: "You will now receive bin full notifications.",
-          icon: "/icon.png"
+          icon: iconUrl,
+          badge: iconUrl
         });
       } else {
         alert("Notifications blocked. Go to browser settings and allow notifications for this site.");
@@ -101,22 +123,21 @@ if (document.getElementById("bins-grid")) {
   // Restore button state on page load if already allowed
   window.addEventListener("load", () => {
     const btn = document.getElementById("btn-notif");
-    if (btn && Notification.permission === "granted") {
+    if (btn && notificationsSupported() && Notification.permission === "granted") {
       btn.textContent = "🔔 ON";
       btn.classList.add("enabled");
       if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/firebase-messaging-sw.js");
+        registerAlertServiceWorker();
       }
     }
   });
 
   /* ---------- SEND PUSH NOTIFICATION ---------- */
   function sendPushNotif(label, pct) {
-    if (Notification.permission !== "granted") return;
-    new Notification(`🚨 ${label} is FULL!`, {
-      body: `Fill level at ${pct}% — needs immediate collection!`,
-      icon: "/icon.png",
-      badge: "/icon.png",
+    showBrowserNotification(`Alert: ${label} is FULL!`, {
+      body: `Fill level at ${pct}% - needs immediate collection!`,
+      icon: iconUrl,
+      badge: iconUrl,
       vibrate: [200, 100, 200],
       tag: label
     });
@@ -214,6 +235,9 @@ if (document.getElementById("bins-grid")) {
     notifLog.length = 0;
     renderNotifList();
   }
+
+  window.enableNotifications = enableNotifications;
+  window.clearNotifs = clearNotifs;
 
   /* ---------- SUMMARY PILLS ---------- */
   function updateSummary() {
