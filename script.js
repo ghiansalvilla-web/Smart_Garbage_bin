@@ -60,33 +60,58 @@ if (document.getElementById("bins-grid")) {
   const notifLog      = [];
   const notifSeen     = {};
   const notifCooldown = {};
-  const COOLDOWN_MS   = 60000; // 1 minute cooldown per bin
+  const COOLDOWN_MS   = 60000;
 
   const BIN_LABELS = {
     bin1: "Bin #1",
     bin3: "Bin #3",
   };
 
-  /* ---------- PUSH NOTIFICATIONS ---------- */
-  async function requestNotifPermission() {
-    if (!("Notification" in window)) return;
+  /* ---------- NOTIFICATIONS PERMISSION ---------- */
+  async function enableNotifications() {
+    if (!("Notification" in window)) {
+      alert("Your browser does not support notifications.");
+      return;
+    }
 
     try {
       const permission = await Notification.requestPermission();
+      const btn = document.getElementById("btn-notif");
+
       if (permission === "granted") {
-        console.log("Notifications allowed");
-        if ("serviceWorker" in navigator) {
-          const reg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-          console.log("Service worker registered:", reg);
+        if (btn) {
+          btn.textContent = "🔔 Alerts ON";
+          btn.classList.add("enabled");
         }
+        if ("serviceWorker" in navigator) {
+          await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+        }
+        // Test notification
+        new Notification("✅ Smart Bin Alerts Enabled!", {
+          body: "You will now receive bin full notifications.",
+          icon: "/icon.png"
+        });
+      } else {
+        alert("Notifications blocked. Please enable in your browser settings.");
       }
     } catch (err) {
       console.error("Notification error:", err);
     }
   }
 
-  requestNotifPermission();
+  // Check on load if already enabled
+  window.addEventListener("load", () => {
+    const btn = document.getElementById("btn-notif");
+    if (btn && Notification.permission === "granted") {
+      btn.textContent = "🔔 Alerts ON";
+      btn.classList.add("enabled");
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/firebase-messaging-sw.js");
+      }
+    }
+  });
 
+  /* ---------- SEND PUSH NOTIFICATION ---------- */
   function sendPushNotif(label, pct) {
     if (Notification.permission !== "granted") return;
 
@@ -143,7 +168,7 @@ if (document.getElementById("bins-grid")) {
     `;
   }
 
-  /* ---------- NOTIFICATIONS ---------- */
+  /* ---------- ADD NOTIFICATION ---------- */
   function addNotification(binId, status, level) {
     if (status !== "FULL") return;
 
@@ -220,7 +245,6 @@ if (document.getElementById("bins-grid")) {
       const level  = Math.min(100, Math.max(0, parseFloat(d.trashLevel) || 0));
       const status = (d.status || "EMPTY").toUpperCase();
 
-      // Only notify once per cooldown period
       if (notifSeen[binId] !== status) {
         const now = Date.now();
         const lastNotif = notifCooldown[binId] || 0;
@@ -251,11 +275,4 @@ if (document.getElementById("bins-grid")) {
       for (const binId in defaultData) {
         const d = defaultData[binId];
         binState[binId]  = d;
-        notifSeen[binId] = d.status.toUpperCase();
-        renderBinCard(binId);
-      }
-      updateSummary();
-    }
-  }, 2500);
-
-} // end dashboard block
+        notifSeen[binId] = d.st
