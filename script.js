@@ -17,7 +17,7 @@ function login() {
   const pass = document.getElementById("password").value;
   const err  = document.getElementById("error");
 
-  if (user === "admin" && pass === "admin1234") {
+  if (user === "admin" && pass === "Admin1234") {
     sessionStorage.setItem("loggedIn", "true");
     window.location.href = "dashboard.html";
   } else {
