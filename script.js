@@ -56,9 +56,11 @@ if (document.getElementById("bins-grid")) {
   const db = firebase.database();
 
   // State
-  const binState  = {};
-  const notifLog  = [];
-  const notifSeen = {};
+const binState    = {};
+const notifLog    = [];
+const notifSeen   = {};
+const notifCooldown = {};  // prevents spam
+const COOLDOWN_MS = 60000; // only notify once per minute per bin
 
   const BIN_LABELS = {
     bin1: "Bin #1",
