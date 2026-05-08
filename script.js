@@ -217,11 +217,16 @@ const COOLDOWN_MS = 60000; // only notify once per minute per bin
       const status = (d.status || "EMPTY").toUpperCase();
 
       if (notifSeen[binId] !== status) {
-        if (notifSeen[binId] !== undefined && status === "FULL") {
-          addNotification(binId, status, level);
-        }
-        notifSeen[binId] = status;
-      }
+  const now = Date.now();
+  const lastNotif = notifCooldown[binId] || 0;
+  const cooldownPassed = (now - lastNotif) > COOLDOWN_MS;
+
+  if (notifSeen[binId] !== undefined && status === "FULL" && cooldownPassed) {
+    addNotification(binId, status, level);
+    notifCooldown[binId] = now;
+  }
+  notifSeen[binId] = status;
+}
 
       binState[binId] = { level, status };
       renderBinCard(binId);
