@@ -459,3 +459,39 @@ body {
   .page-header    { flex-direction: column; }
   .topbar         { padding: 0.75rem 1rem; }
 }
+/* ============================
+   MOBILE IMPROVEMENTS
+   ============================ */
+@media (max-width: 600px) {
+  .bins-grid { grid-template-columns: 1fr; }
+  .topbar-title { font-size: 0.9rem; }
+  .page-header h2 { font-size: 1.2rem; }
+  .summary-pills { flex-wrap: wrap; }
+  .bin-card { padding: 1rem; }
+  .login-card { padding: 1.5rem 1.25rem; }
+}
+
+/* ============================
+   ALERT BUTTON
+   ============================ */
+.btn-notif {
+  background: var(--green-bg);
+  border: 1px solid var(--green);
+  color: var(--green);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-notif:hover {
+  background: var(--green);
+  color: #0a1a0a;
+}
+
+.btn-notif.enabled {
+  opacity: 0.6;
+  cursor: default;
+  pointer-events: none;
+}
