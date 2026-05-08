@@ -64,7 +64,6 @@ if (document.getElementById("bins-grid")) {
 
   const BIN_LABELS = {
     bin1: "Bin #1",
-    bin3: "Bin #3",
   };
 
   /* ---------- ENABLE NOTIFICATIONS ---------- */
